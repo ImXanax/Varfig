@@ -65,6 +65,7 @@ function partBuilder() {
 
 const menu = () => {
   const selectionSection = document.querySelector(".selection");
+
   if (selectionSection.style.display === "none") {
     selectionSection.style.display = "flex";
     setTimeout(() => {
@@ -109,11 +110,19 @@ const fetchOptions = () => {
       amount: el.lastChild.value ? Number(el.lastChild.value) : 1,
     });
   });
-  return options;
+
+  localStorage.setItem("selection", JSON.stringify(options));
+  // if (options.length !== 0) {
+  //   return options;
+  // } else {
+  //   return null;
+  // }
 };
 
 const createTable = () => {
-  const options = fetchOptions();
+  fetchOptions();
+  const options = JSON.parse(localStorage.getItem("selection"));
+  if (options.length === 0) return;
   const app = document.querySelector(".app");
   const table = document.createElement("table");
   table.classList.add("conf-table");
@@ -175,9 +184,12 @@ const createTable = () => {
       table.appendChild(tableRow);
     }
   });
-  // DELETE | RESET buttons
+  // DELETE | RESET | CREATE buttons
   const deleteTableBtn = document.createElement("button");
   const resetTableBtn = document.createElement("button");
+  const createTableBtn = document.getElementById("createTable");
+  console.log(createTableBtn);
+  createTableBtn.style.display = "none";
   const buttonContainer = document.querySelector(".button-container");
   deleteTableBtn.setAttribute("onclick", "deleteTable()");
   deleteTableBtn.textContent = "DELETE";
@@ -197,31 +209,32 @@ const createTable = () => {
 };
 
 const printMode = () => {
+  let inPrintMode;
   const hideUI = document.getElementById("empty-cell");
+  const header = document.querySelector(".title-bar");
   hideUI.addEventListener("click", () => {
     const btnContainer = document.querySelector(".button-container");
     if (btnContainer.style.display === "none") {
+      inPrintMode = true;
+      header.style.display = "block";
       btnContainer.style.display = "flex";
       // setting bg color
       document.body.style.backgroundColor = getComputedStyle(
         document.body
       ).getPropertyValue(`--primary-bg-clr`);
-      // logger
-      console.log(
-        getComputedStyle(document.body).getPropertyValue(`--primary-bg-clr`)
-      );
       // setting bg path
       document.body.style.backgroundImage = getComputedStyle(
         document.body
       ).getPropertyValue(`--background-path`);
-      // logger
-      console.log(
-        getComputedStyle(document.body).getPropertyValue(`--background-path`)
-      );
     } else {
+      inPrintMode = false;
+      header.style.display = "none";
       btnContainer.style.display = "none";
       document.body.style.backgroundColor = "white";
     }
+    // allow exit from print mode without triggering print();
+    if (!inPrintMode) window.print();
+    else return;
   });
 };
 
@@ -251,6 +264,9 @@ const resetValues = () => {
 };
 const deleteTable = () => {
   const table = document.querySelector(".conf-table");
+  // display CREATE BUTTON
+  const createTableBtn = document.getElementById("createTable");
+  createTableBtn.style.display = "block";
   menu();
   table.remove();
   if (!document.querySelector(".conf-table")) {
@@ -264,13 +280,4 @@ const deleteTable = () => {
     resetTableBtn.remove();
   }
 };
-/*
-- reset table button
-- hide ui functionality for Print 
-- refactor code 
-- comment 
-- remove loggers
-- option to create more than one table ?
-  |_currently can make more than one (bug?feat?)
--
-*/
+

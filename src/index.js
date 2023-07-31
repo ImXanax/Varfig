@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+const ipc = ipcMain;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -9,25 +10,53 @@ if (require("electron-squirrel-startup")) {
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    frame:false,
+    width: 650,
+    height: 670,
+    minWidth: 450,
+    icon:"./logo.ico",
+    frame: false,
     titleBarOverlay: {
       color: "#2f3241",
       symbolColor: "#74b1be",
       height: 25,
     },
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      // preload: path.join(__dirname, "preload.js"),
+      contextIsolation: false,
+      devTools: false,
+      nodeIntegration: true,
     },
   });
-
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-  mainWindow.isResizable(false)
+  // mainWindow.webContents.openDevTools();
+
+  // close & min & max titlebar functionality
+  ipc.on("closeApp", () => {
+    mainWindow.close();
+  });
+  ipc.on("maxApp", () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.restore();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+  ipc.on("minApp", () => {
+    mainWindow.minimize();
+  });
+  // deals with icon switches
+  mainWindow.on('maximize',()=>{
+    mainWindow.webContents.send("isMaximized")
+  })
+  mainWindow.on('unmaximize',()=>{
+    mainWindow.webContents.send("isRestored")
+  })
+  
+
+  mainWindow.setIcon(path.join(__dirname, "/images/vartech.png"));
 };
 
 // This method will be called when Electron has finished
